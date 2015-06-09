@@ -1,8 +1,9 @@
-var unlockShows = false;
-var unlockFuture = false;
-var unlockHistory = false;
 
 function initGui() {
+    $("#open_sb").click(function(){openSBPage();});
+    $("#extension_settings").click(function(){openSettings();});
+    $("#refresh").click(function(){refreshContent();});
+    
     // see popup-ui.js
     _initGui();
 }
@@ -14,6 +15,12 @@ function initContent() {
     log("opening the popup", "POP", DEBUG);
     // load shows into gui
 
+    //set flag to not auto change the profile while pop is open
+    settings.setItem('in_popup', true);
+    
+    // set current profile
+    setupProfileSwitcher();
+    
     var params = new Params();
     params.cmd = "shows";
     params.sort = "name";
@@ -30,6 +37,7 @@ function initContent() {
     var addshowset = settings.getItem('config_addshow');
     if((addshowset == 'popup' || addshowset == 'both'))
         pageTVDBID(injectAddNewShow);
+
 
 }
 function refreshContent() {
@@ -154,12 +162,22 @@ function openSBPage() {
     window.close();
 }
 
+function openSettings(){
+    chrome.tabs.create({url: 'options.html'});
+    window.close();
+}
+
+addEventListener("unload", function (event) {
+    settings.setItem('in_popup', false);
+}, true);
+
+
 if (lastOpened > 0) {
     if (NOW - lastOpened < 700) {
         openSBPage();
+        window.close();
     }
 }
-
 if (!closeWindow) {
     age.setItem("lastOpened", NOW);
     // this comes before the bottom one
@@ -167,8 +185,7 @@ if (!closeWindow) {
         initGui();
         initContent();
     });
-    // this is called after the above one
-    window.onload = function() {
-        // what can we do here ?
-    };
+}else{
+    window.close();
 }
+

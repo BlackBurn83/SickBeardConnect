@@ -1,6 +1,10 @@
 var lastHeight = {};
 var initialHeight = {};
 
+var unlockShows = false;
+var unlockFuture = false;
+var unlockHistory = false;
+
 function _initGui() {
     log("initialising the gui", "POP", DEBUG);
     $("body").addClass(settings.getItem("config_width"));
@@ -44,7 +48,11 @@ function _initGui() {
     $('#contend').bind('tabsshow', function(event, ui) {
         cache.setItem('last_tab', ui.index);
     });
+    
+    initSearchImageEventHook();
+}
 
+function initSearchImageEventHook(){
     $("img.search").live('click', function(e) {
         var id = $(this).attr("id");
         var splitID = id.split("-");
@@ -61,9 +69,9 @@ function _initGui() {
         params.episode = episode;
         genericRequest(params, searchSuccess, searchError, 0, null); // no timeout
         listenForNotificationsFast(); // for 1 min
-    });
-
+    });    
 }
+
 
 function unlockContent(area) {
     switch (area) {
@@ -158,6 +166,7 @@ function buildAddShow(tvdbid,name){
     spanText.addClass('addShow');
     var buttonSpan = $('<span class="quality" style="background:none;">');
     var selectQ = $('<select>');
+    selectQ.append('<option value="">Default</option>');
     selectQ.append('<option value="sdtv|sddvd">SD</option>');
     selectQ.append('<option value="hdtv|hdwebdl|hdbluray">HD</option>');
     selectQ.append('<option value="sdtv|sddvd|hdtv|hdwebdl|hdbluray|unknown">ANY</option>');
@@ -205,7 +214,9 @@ function buildAddShow(tvdbid,name){
         genericRequest(params, addSuccess, addFail, 0, null);    
     });
     newLi.append(spanText);
+    newLi.append('<span>Q:</span>');
     newLi.append(selectQ);
+    newLi.append('<span>   S:</span>');
     newLi.append(selectS);
     buttonSpan.append(yesImg);
     buttonSpan.append(noImg);
@@ -316,7 +327,7 @@ function seasonBuild(response, params) {
         liHTMLString += '<span class="status ' + value.status + '">' + value.status + '</span>';
         liHTMLString += '<span class="date">' + getAirDate(value.airdate) + '</span>';
 
-        li.append(createSearchImg(params.tvdbid, params.season, key));
+        li.append(createSearchImg(params.tvdbid, params.season, value.episode,2));
         li.append(liHTMLString);
         $("#seasonEpisodes ul").append(li);
     });
@@ -355,13 +366,25 @@ function futureBuild(response, params) {
             
             var li = $('<li class="'+imgType+' '+popWidth+'">');
             var liHTMLString_name = '<span class="show_name" id="' + value.tvdbid + '">' + value.show_name + '</span><br/>';
-            liHTMLString_ep = '<span class="epSeasonEpisode">s' + pad(value.season, 2) + 'e' + pad(value.episode, 2) + '</span>';
+            liHTMLString_ep = '<span class="epSeasonEpisode">S' + pad(value.season, 2) + 'E' + pad(value.episode, 2) + '</span>';
             liHTMLString_ep += '<span class="ep_name">' + value.ep_name + '</span>';
             var img = "";
             if(imgType == 'poster'){
-                img = '<img class="future_poster" src="'+constructShowPosterUrl(value.tvdbid)+'"/>';
+                liHTMLString_ep += '<br /><span class="ep_airs_poster">' + value.airs + '</span>';
+				img = '<img class="future_poster" src="'+constructShowPosterUrl(value.tvdbid)+'"/>';
             }else if(imgType == 'banner'){
-                img = '<img class="future_banner" src="'+constructShowBannerUrl(value.tvdbid)+'"/>';
+                liHTMLString_ep += '<span class="ep_airs_banner">' + value.airs + '</span>';
+                img = '<div style="height:';
+		if(popWidth == 'small'){
+			img += '45px;';
+		}else if(popWidth == 'medium'){
+			img += '63px;';
+		}if(popWidth == 'big'){
+			img += '82px;';
+		}
+		img += 'background-image: url(\''+constructShowBannerUrl(value.tvdbid)+'\');background-size:100%;text-align:right;"><div style="float:right;padding: 5px 5px 5px 5px;">';
+		img += createSearchImg(value.tvdbid, value.season, value.episode, 1);82
+		img += '</div></div>';
             }
 
             if(img)
@@ -373,11 +396,9 @@ function futureBuild(response, params) {
                 li.append('<div class="clearRight clearLeft"></div>');
             }
             li.append(liHTMLString_ep);
-            if(imgType != "none")
-                li.append(createSearchImg(value.tvdbid, value.season, value.episode));
-            else
-                li.prepend(createSearchImg(value.tvdbid, value.season, value.episode));
-            li.append('<div class="clearRight clearLeft"></div>');
+            if(imgType == "poster") {
+                li.prepend(createSearchImg(value.tvdbid, value.season, value.episode, 2));
+			}
             curUl.append(li);
             entrys = true;
         });
@@ -391,8 +412,56 @@ function futureBuild(response, params) {
     cache.setItem("html_" + params, $("#future-arc").html());
     age.setItem("html_" + params, $.now());
     // refresh the badge
-    chrome.extension.getBackgroundPage().setBadge(response, params);
+    try { // this will fail if called from the aNTP iframe
+        chrome.extension.getBackgroundPage().setBadge(response, params);
+    } catch (e){
+        // do nothing
+    }
+
     futureAfterDone();
+}
+
+function setupProfileSwitcher(){
+    if(profiles.count() <= 1)
+        return false;
+    $('#profile').show();
+    var allProfiles = profiles.getAll();
+    var ul = $('<ul>');
+    $.each(allProfiles, function(name, values) {
+
+        var curLi = $('<li>');
+        curLi.html(name);
+        curLi.click(function(){
+            chrome.extension.getBackgroundPage().switchProfile(name);
+            refreshContent();
+        });
+        ul.append(curLi);
+    });
+        
+    $('#profile').qtip({
+        content: {
+            text: function(api) {
+                return $('<h5>Switch to Profile</h5>').append(ul);
+            }
+        },
+        show: {
+            event: 'click'
+        },
+        style: {
+            classes: 'ui-tooltip-shadow ui-tooltip-rounded ui-sb-profile-switcher ui-tooltip-tipped'
+        },
+        position: {
+            my: 'bottom center',
+            at: 'top center'
+        },
+        hide: {
+            fixed: true,
+            delay: 500
+        }
+    });
+    
+    
+    $('#profile').html(settings.getItem('profile_name'));
 }
 
 function futureTimeout(response, params, timeout) {
@@ -435,7 +504,7 @@ function historyBuild(response, params) {
             var li = $("<li>");
             var liHTMLString = '<span class="show_name" id="' + value.tvdbid + '">' + value.show_name + '</span>';
             liHTMLString += '<span class="date">' + getNiceHistoryDate(value.date) + '</span><br/>';
-            liHTMLString += '<span class="epSeasonEpisode">s' + pad(value.season, 2) + 'e' + pad(value.episode, 2) + '</span>';
+            liHTMLString += '<span class="epSeasonEpisode">S' + pad(value.season, 2) + 'E' + pad(value.episode, 2) + '</span>';
             liHTMLString += '<span class="status ' + value.status + '">' + value.status + '</span>';
             liHTMLString += '<span class="historyQuality">' + value.quality + '</span>';
             li.append(liHTMLString);
@@ -488,14 +557,16 @@ function searchError(response, params) {
     listenForNotificationsFast(20000); // 20 sec
 }
 
-function createSearchImg(tvdbid, season, episode) {
-    var img = $("<img>");
-    img.addClass("search " + tvdbid + "-" + season + "-" + episode);
-    img.attr("id", tvdbid + "-" + season + "-" + episode);
-    img.attr("src", chrome.extension.getURL('images/search16.png'));
-    return img;
-}
+function createSearchImg(tvdbid, season, episode, type) {
+	var img = '<img ';
+	if (type == 1)
+	{
+	img += 'style="background-color: white; padding: 5px 5px 5px 5px;"';
+	}
+	img += 'class="search ' + tvdbid + "-" + season + "-" + episode+ '" id="'+ tvdbid + "-" + season + "-" + episode +'" src="'+chrome.extension.getURL('images/search16.png')+'">';
+	return img;
 
+	}
 /*
  * generic gui helper functions
  */

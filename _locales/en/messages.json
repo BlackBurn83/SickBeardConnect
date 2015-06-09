@@ -5,7 +5,19 @@
     "sb_name": {
         "message": "SickBeard" 
     },
-    
+
+    "default_profile_name": {
+        "message": "Default"
+    },
+    "options_profile_create_button":{
+        "message": "New Profile"
+    },
+    "options_profile_copy_button":{
+        "message": "Copy Profile"
+    },
+    "options_profile_delete_button":{
+        "message": "Delete Profile"
+    },
     
     "settings": {
         "message": "Settings"
@@ -71,6 +83,12 @@
     "options_apiKey_description": {
         "message": "Get the ApiKey from the SickBeard config page"
     },
+    "options_priority_label": {
+      "message": "Priority"
+    },
+    "options_prority_description":{
+        "message": "Higher number means higher priority."
+    },
     "options_connectionStatus_label": {
         "message": "Connections status"
     },
@@ -87,7 +105,16 @@
         "message": "SickBeard Password"
     },
     "options_usernamePassword_description": {
-        "message": "You only need to provide the Username and password if you want to display images"
+        "message": "You only need to provide the username and password if you want to display images and are below API v0.2"
+    },
+    "options_group_profile_switching": {
+        "message": "Profile Auto Switching"
+    },
+    "options_profile_switching_label": {
+        "message": "Check Profile every"
+    },
+    "options_profile_switching_description": {
+        "message": "If auto profile switching is on, it will try to find the profile with the highst priority which is online and will change to that profile. Only profiles with a priority are checked. It will not automatically switch if config or popup is open."
     },
     "options_width_label": {
         "message": "Popup width"
@@ -100,9 +127,6 @@
     },
     "options_imageFuture_label": {
         "message": "Images in CommingEp Tab"
-    },
-    "options_imageFuture_description":{
-        "message": "If images fail to load check the username and password"
     },
     "options_iconBadge_label": {
         "message": "Icon badge displays"
@@ -132,22 +156,10 @@
         "message": "Look for Notifications every"
     },
     "options_notificationRefreshRate_description": {
-        "message": "The refresh rate is increades for 60 seconds when a notification is anticipated"
+        "message": "The refresh rate is increased for 60 seconds when a notification is anticipated"
     },
     "options_notificationVisable_label": {
         "message": "Display Notification for"
-    },
-    "options_useChrome2growl_label": {
-        "message": "Activate Chrome2Growl"
-    },
-    "options_useChrome2growl_describtion": {
-        "message": "Real instuctions how to use this/install server will follow.<br/>This is very advanced !<br/>If this is setup correctly all notification will display as real growl notifications!<br/>You need <a href='http://nodejs.org/'>NodeJS</a> and <a href='https://gist.github.com/1219028' >this</a> file<br/>install the 'websocket' node module by running 'npm install websocket' and you need 'growlnotify'"
-    },
-    "options_chrome2growlIconPath_label": {
-        "message": "Absolute icon path"
-    },
-    "options_chrome2growlHost_label": {
-        "message": "NodeJS Server"
     },
     "options_resetSettings_text": {
         "message": "Reset to default settings"

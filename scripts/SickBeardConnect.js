@@ -138,11 +138,14 @@ function initGui(){
              }
          }
      );
-    
-    addForm.appendChild(_buildSelect('sb_quality',{'SD':'sdtv|sddvd',
+    addForm.appendChild(create("span",{innerHTML:"Q:"}));
+    addForm.appendChild(_buildSelect('sb_quality',{ 'Default': '',
+                                                    'SD':'sdtv|sddvd',
                                                     'HD':'hdtv|hdwebdl|hdbluray',
                                                     'ANY':'sdtv|sddvd|hdtv|hdwebdl|hdbluray|unknown'}));
     addForm.appendChild(create('br',{}));
+
+    addForm.appendChild(create("span",{innerHTML:"S:"}));
     addForm.appendChild(_buildSelect('sb_initial_status',{'Default':'',
                                                         'Wanted':'wanted',
                                                         'Skipped':'skipped',
@@ -152,7 +155,7 @@ function initGui(){
     addForm.appendChild(create('br',{}));
     addForm.appendChild(create('input',{
         type: 'button',
-        value: 'add',
+        value: 'Add',
         onclick: function(){
             var curQ = getQ();
             var curS = getS();
